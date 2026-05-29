@@ -1,0 +1,29 @@
+# Credenciais
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Robot Framework
+results/
+log.html
+report.html
+output.xml
+selenium-screenshot-*.png
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# MacOS
+.DS_Store
