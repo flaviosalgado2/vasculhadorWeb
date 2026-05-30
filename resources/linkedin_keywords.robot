@@ -2,92 +2,98 @@
 Documentation    Keywords personalizadas para automação do LinkedIn
 Library          SeleniumLibrary
 Library          OperatingSystem
+Library          ./LinkedInBrowser.py
 Resource         ../config/settings.robot
 
 *** Keywords ***
 Abrir LinkedIn no Chrome
-    [Documentation]    Abre o LinkedIn no Google Chrome
-    ...                Se o Chrome já estiver aberto, usa a mesma janela
+    [Documentation]    Abre o LinkedIn usando undetected-chromedriver (bypass de detecção de bots)
     
-    # Configuração do Chrome para reutilizar sessão
-    ${chrome_options}=    Evaluate    sys.modules['selenium.webdriver'].ChromeOptions()    sys, selenium.webdriver
-    Call Method    ${chrome_options}    add_argument    --start-maximized
-    
-    # Abre o navegador
-    Open Browser    ${LINKEDIN_URL}    ${BROWSER}    options=${chrome_options}
-    Maximize Browser Window
-    Set Selenium Speed    0.5 seconds
-    Log    ✅ Chrome aberto com sucesso
+    Abrir Chrome Anti-Detecção    ${LINKEDIN_URL}
+    Set Selenium Implicit Wait    10s
+    Log    ✅ Chrome aberto com sucesso (modo anti-detecção)
 
 Fazer Login no LinkedIn
     [Documentation]    Realiza o login no LinkedIn com as credenciais fornecidas
     [Arguments]    ${email}    ${password}
     
-    # Aguarda a página carregar
-    Wait Until Element Is Visible    css=.nav__button-secondary    timeout=${DEFAULT_TIMEOUT}
+    # Vai direto para a página de login
+    Go To    https://www.linkedin.com/login
     
-    # Verifica se já está logado
+    # Aguarda a página carregar completamente
+    Aguardar Com Variação Humana    3    1
+    Capture Page Screenshot    01_pagina_login.png
+    
+    # Verifica se já está logado (sessão ativa)
     ${is_logged}=    Run Keyword And Return Status
-    ...    Page Should Contain Element    css=[data-test-id="feed-tab"]
+    ...    Location Should Contain    /feed
     
     Run Keyword If    ${is_logged}    Log    ℹ️ Usuário já está logado
     ...    ELSE    Executar Login    ${email}    ${password}
 
 Executar Login
-    [Documentation]    Executa o processo de login
+    [Documentation]    Preenche os campos de login clicando diretamente nos inputs visíveis
     [Arguments]    ${email}    ${password}
     
-    # Vai para página de login
-    Click Element    css=.nav__button-secondary
-    Wait Until Location Contains    /login    timeout=${DEFAULT_TIMEOUT}
+    # Aguarda o campo de e-mail visível (o LinkedIn tem 2 pares de inputs no DOM;
+    # [last()] garante que pegamos o segundo par, que é o visível na tela)
+    Wait Until Element Is Visible    xpath=(//input[@type='email'])[last()]    timeout=${LONG_TIMEOUT}
+    Capture Page Screenshot    02_antes_preencher.png
     
-    # Preenche credenciais
-    Wait Until Element Is Visible    id=username    timeout=${DEFAULT_TIMEOUT}
-    Input Text    id=username    ${email}
-    Input Password    id=password    ${password}
+    # Clica e digita no campo "E-mail ou telefone" (input visível)
+    Preencher Campo Com Digitação Humana    xpath=(//input[@type='email'])[last()]    ${email}
+    Aguardar Com Variação Humana    0.5    0.5
     
-    # Clica no botão de login
-    Click Button    css=button[type="submit"]
+    # Clica e digita no campo "Senha" (input visível)
+    Preencher Campo Com Digitação Humana    xpath=(//input[@type='password'])[last()]    ${password}
+    Aguardar Com Variação Humana    1    0.5
     
-    # Aguarda o login completar
+    Capture Page Screenshot    03_antes_submit.png
+    
+    # Clica no botão "Entrar" visível ([last()] ignora o botão oculto do form duplicado)
+    Click Element    xpath=(//button[normalize-space()='Entrar'])[last()]
+    
+    # Aguarda o redirecionamento para o feed
     Wait Until Location Contains    /feed    timeout=${LONG_TIMEOUT}
+    Aguardar Com Variação Humana    2    1
+    Capture Page Screenshot    04_apos_login.png
     Log    ✅ Login realizado com sucesso
+
+Ir Para Pagina de Login
+    [Documentation]    Navega para a página de login do LinkedIn
+    
+    Go To    https://www.linkedin.com/login
+    Aguardar Com Variação Humana    2    1
 
 Criar Nova Postagem
     [Documentation]    Cria uma nova postagem no LinkedIn
     [Arguments]    ${mensagem}
     
-    # Aguarda o feed carregar
-    Wait Until Element Is Visible    css=.share-box-feed-entry__trigger    timeout=${DEFAULT_TIMEOUT}
+    Aguardar Com Variação Humana    2    1
+    Capture Page Screenshot    05_feed_carregado.png
     
-    # Clica no botão "Começar publicação"
-    Click Element    css=.share-box-feed-entry__trigger
+    # Clica no campo "Começar publicação" pelo texto exato visível na tela
+    Wait Until Element Is Visible    xpath=//*[normalize-space()='Começar publicação']    timeout=${LONG_TIMEOUT}
+    Click Element    xpath=//*[normalize-space()='Começar publicação']
     
-    # Aguarda o editor de postagem abrir
-    Wait Until Element Is Visible    css=.ql-editor    timeout=${DEFAULT_TIMEOUT}
-    Sleep    1s
+    # Aguarda o modal abrir e o cursor aparecer no editor
+    Aguardar Com Variação Humana    2    0.5
+    Capture Page Screenshot    06_editor_aberto.png
     
-    # Digita a mensagem
-    Click Element    css=.ql-editor
-    Input Text    css=.ql-editor    ${mensagem}
+    # Modal aberto e cursor já piscando — digita direto
+    Digitar No Editor Do Post    ${mensagem}
+    Aguardar Com Variação Humana    1    0.5
+    Capture Page Screenshot    07_mensagem_digitada.png
     Log    ✅ Mensagem digitada: ${mensagem}
 
 Publicar Postagem
-    [Documentation]    Clica no botão de publicar
+    [Documentation]    Clica no botão "Publicar" visível no modal
     
-    # Aguarda o botão estar habilitado
-    Wait Until Element Is Enabled    css=button.share-actions__primary-action    timeout=${DEFAULT_TIMEOUT}
+    # Aguarda o botão "Publicar" ficar visível (aparece no canto inferior direito do modal)
+    Wait Until Element Is Visible    xpath=//button[normalize-space()='Publicar']    timeout=${LONG_TIMEOUT}
+    Aguardar Com Variação Humana    1    0.5
+    Click Element    xpath=//button[normalize-space()='Publicar']
     
-    # Clica em publicar
-    Click Button    css=button.share-actions__primary-action
-    
-    # Aguarda confirmação
-    Sleep    3s
+    Aguardar Com Variação Humana    3    1
+    Capture Page Screenshot    08_apos_publicar.png
     Log    ✅ Postagem publicada com sucesso!
-
-Fechar Navegador de Forma Segura
-    [Documentation]    Fecha o navegador e limpa recursos
-    
-    Sleep    2s
-    Close Browser
-    Log    ✅ Navegador fechado

@@ -8,8 +8,8 @@ ${LINKEDIN_URL}         https://www.linkedin.com
 ${LINKEDIN_LOGIN_URL}   https://www.linkedin.com/login
 
 # Timeouts
-${DEFAULT_TIMEOUT}      10s
-${LONG_TIMEOUT}         20s
+${DEFAULT_TIMEOUT}      15s
+${LONG_TIMEOUT}         30s
 
 # Navegador
 ${BROWSER}              Chrome
