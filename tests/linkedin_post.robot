@@ -11,7 +11,7 @@ Suite Setup      Preparar Ambiente de Teste
 Suite Teardown   Fechar Navegador de Forma Segura
 
 *** Variables ***
-${MENSAGEM}    Boa Noite
+${MENSAGEM}    oi
 
 *** Test Cases ***
 Postar Mensagem no LinkedIn

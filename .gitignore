@@ -17,6 +17,13 @@ log.html
 report.html
 output.xml
 selenium-screenshot-*.png
+*_pagina_*.png
+*_antes_*.png
+*_apos_*.png
+*_feed_*.png
+*_editor_*.png
+*_mensagem_*.png
+*_publicar_*.png
 
 # IDE
 .vscode/
